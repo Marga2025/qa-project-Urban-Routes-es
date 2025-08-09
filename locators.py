@@ -1,0 +1,15 @@
+from selenium.webdriver.common.by import By
+
+FROM_FIELD = (By.ID, 'from')
+TO_FIELD = (By.ID, 'to')
+REQUEST_TAXI_BUTTON = (By.XPATH, "//button[text() = 'Pedir un taxi']")
+MODE_COMFORT_BUTTON = (By.XPATH, "//div[contains(@class, 'tcard') and .//div[text()='Comfort']]")
+TELEPHONE_NUMBER_FIELD = (By.CLASS_NAME, 'np-text')
+TELEPHONE_BUTTON = (By.XPATH, '//div[@class = "np-button"]')
+ADD_CARD_BUTTON = (By.XPATH, "//div[contains(@class, 'pp-button') and .//div[text()='Método de pago']]")
+CVV_INPUT = (By.ID, 'code')
+CARD_INPUT = (By.ID, 'number')
+MESSAGE_INPUT = (By.ID, 'comment')
+BLANKET_CHECKBOX = (By.CLASS_NAME, 'switch-input')
+ICE_CREAM_BUTTON = (By.XPATH, '//*[@id="root"]/div/div[3]/div[3]/div[2]/div[2]/div[4]/div[2]/div[3]/div/div[2]/div[1]/div/div[2]/div/div[3]')
+DRIVER_MODAL = (By.CLASS_NAME, 'card-input')
