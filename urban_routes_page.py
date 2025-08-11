@@ -2,6 +2,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 import locators
+from urban_routes_utils import retrieve_phone_code
 
 
 class UrbanRoutesPage:
@@ -20,6 +21,7 @@ class UrbanRoutesPage:
         self.to_field = locators.TO_FIELD
         self.from_field = locators.FROM_FIELD
 
+
     def load(self, url):
         self.driver.get(url)
 
@@ -34,9 +36,13 @@ class UrbanRoutesPage:
         # Enviar las teclas
         from_element.send_keys(from_address)
 
+    def get_from(self):  # ← AGREGAR AQUÍ
+        return self.driver.find_element(*self.from_field).get_attribute("value")
+
     def set_to(self, to_address):
         # Esperar a que el elemento esté presente
         to_element = self.wait.until(EC.presence_of_element_located(self.to_field))
+
 
         # Usar JavaScript para hacer foco y limpiar el campo
         self.driver.execute_script("arguments[0].focus();", to_element)
@@ -56,14 +62,31 @@ class UrbanRoutesPage:
         comfort_button.click()
         return comfort_button.is_enabled()
 
+    def add_telephone_number(self, phone):
+        # Usar self.telephone_number en lugar de self.TELEPHONE_NUMBER_FIELD
+        phone_field = self.wait.until(EC.element_to_be_clickable(self.telephone_number))
+        phone_field.send_keys(phone)
+
+        # Confirmar número
+        next_button = self.wait.until(EC.element_to_be_clickable(self.telephone_button))
+        next_button.click()
+
+        # Obtener código SMS
+        code = retrieve_phone_code(driver=self.driver)
+
+        # Necesitas agregar localizadores para SMS
+        sms_field = self.wait.until(EC.element_to_be_clickable((By.ID, "code")))
+        sms_field.send_keys(code)
+
+        # Botón confirmar SMS - necesitas agregarlo a locators.py
+        confirm_button = self.wait.until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Confirmar')]")))
+        confirm_button.click()
+
     def click_telephone_number_button(self):
         telephone_number_button = self.wait.until(EC.element_to_be_clickable(self.telephone_button))
         telephone_number_button.click()
         return telephone_number_button.is_enabled()
-
-    def add_telephone_number(self, phone):
-        self.driver.find_element(*self.telephone_number).send_keys(phone)
-        return self.driver.find_element(*self.to_field).get_property('value')
 
     def add_credit_card(self, card_number, code):
         self.driver.find_element(*self.add_card_button).click()
