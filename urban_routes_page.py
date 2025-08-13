@@ -21,28 +21,27 @@ class UrbanRoutesPage:
         self.to_field = locators.TO_FIELD
         self.from_field = locators.FROM_FIELD
 
-
     def load(self, url):
         self.driver.get(url)
 
     def set_from(self, from_address):
-        # Esperar a que el elemento esté presente
         from_element = self.wait.until(EC.presence_of_element_located(self.from_field))
-
-        # Usar JavaScript para hacer foco y limpiar el campo
         self.driver.execute_script("arguments[0].focus();", from_element)
         self.driver.execute_script("arguments[0].value = '';", from_element)
-
-        # Enviar las teclas
         from_element.send_keys(from_address)
 
-    def get_from(self):  # ← AGREGAR AQUÍ
+    def get_from(self):
         return self.driver.find_element(*self.from_field).get_attribute("value")
 
     def set_to(self, to_address):
-        # Esperar a que el elemento esté presente
         to_element = self.wait.until(EC.presence_of_element_located(self.to_field))
+        self.driver.execute_script("arguments[0].focus();", to_element)
+        self.driver.execute_script("arguments[0].value = '';", to_element)
+        to_element.send_keys(to_address)
 
+    def get_to(self):
+        to_element = self.wait.until(EC.presence_of_element_located(self.to_field))
+        return to_element.get_attribute("value")
 
         # Usar JavaScript para hacer foco y limpiar el campo
         self.driver.execute_script("arguments[0].focus();", to_element)
@@ -62,31 +61,35 @@ class UrbanRoutesPage:
         comfort_button.click()
         return comfort_button.is_enabled()
 
+    def click_telephone_number_button(self):
+        # Esperar que el botón esté listo y hacer clic
+        telephone_number_button = self.wait.until(EC.element_to_be_clickable(self.telephone_button))
+        telephone_number_button.click()
+
+        # Esperar que aparezca el campo de número de teléfono para confirmar que se abrió
+        self.wait.until(EC.visibility_of_element_located(self.telephone_number))
+        return True
+
     def add_telephone_number(self, phone):
-        # Usar self.telephone_number en lugar de self.TELEPHONE_NUMBER_FIELD
+        # Esperar campo de teléfono y limpiarlo
         phone_field = self.wait.until(EC.element_to_be_clickable(self.telephone_number))
+        phone_field.clear()
         phone_field.send_keys(phone)
 
-        # Confirmar número
+        # Botón para confirmar teléfono
         next_button = self.wait.until(EC.element_to_be_clickable(self.telephone_button))
         next_button.click()
 
-        # Obtener código SMS
-        code = retrieve_phone_code(driver=self.driver)
+        # Esperar campo de SMS antes de obtener código
+        sms_field = self.wait.until(EC.element_to_be_clickable(locators.SMS_CODE_FIELD))
 
-        # Necesitas agregar localizadores para SMS
-        sms_field = self.wait.until(EC.element_to_be_clickable((By.ID, "code")))
+        # Obtener código desde los logs de red
+        code = retrieve_phone_code(driver=self.driver)
         sms_field.send_keys(code)
 
-        # Botón confirmar SMS - necesitas agregarlo a locators.py
-        confirm_button = self.wait.until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Confirmar')]")))
+        # Confirmar SMS
+        confirm_button = self.wait.until(EC.element_to_be_clickable(locators.SMS_CONFIRM_BUTTON))
         confirm_button.click()
-
-    def click_telephone_number_button(self):
-        telephone_number_button = self.wait.until(EC.element_to_be_clickable(self.telephone_button))
-        telephone_number_button.click()
-        return telephone_number_button.is_enabled()
 
     def add_credit_card(self, card_number, code):
         self.driver.find_element(*self.add_card_button).click()
