@@ -1,8 +1,10 @@
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-import locators
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from urban_routes_utils import retrieve_phone_code
+
+import locators
+
 
 
 class UrbanRoutesPage:
@@ -20,6 +22,12 @@ class UrbanRoutesPage:
         self.mode_comfort_button = locators.MODE_COMFORT_BUTTON
         self.to_field = locators.TO_FIELD
         self.from_field = locators.FROM_FIELD
+        # Localizadores que faltaban:
+        self.cvv_input = locators.CVV_INPUT
+        self.card_input = locators.CARD_INPUT
+        self.sms_code_field = locators.SMS_CODE_FIELD
+        self.sms_confirm_button = locators.SMS_CONFIRM_BUTTON
+        self.next_button = locators.NEXT_BUTTON
 
     def load(self, url):
         self.driver.get(url)
@@ -42,24 +50,34 @@ class UrbanRoutesPage:
     def get_to(self):
         to_element = self.wait.until(EC.presence_of_element_located(self.to_field))
         return to_element.get_attribute("value")
-
         # Usar JavaScript para hacer foco y limpiar el campo
         self.driver.execute_script("arguments[0].focus();", to_element)
         self.driver.execute_script("arguments[0].value = '';", to_element)
 
-        # Enviar las teclas
-        to_element.send_keys(to_address)
-
+    def fill_route(self, from_address, to_address):
+            """Llenar origen y destino"""
+            self.set_from(from_address)
+            self.set_to(to_address)
 
     def check_request_taxi_button(self):
-        self.driver.find_element(*self.request_taxi_button).click()
-        return self.driver.find_element(*self.request_taxi_button).is_enabled()
+            # Espera hasta que el botón esté presente y clickeable
+            button = self.wait.until(EC.element_to_be_clickable(self.request_taxi_button))
+            button.click()
+            return button.is_enabled()
 
     def click_mode_comfort_button(self):
         comfort_button = self.wait.until(
             EC.element_to_be_clickable(self.mode_comfort_button))
         comfort_button.click()
-        return comfort_button.is_enabled()
+
+        # Verificar múltiples estados
+        is_enabled = comfort_button.is_enabled()
+        button_classes = comfort_button.get_attribute("class")
+
+        print(f"Botón habilitado: {is_enabled}")
+        print(f"Clases del botón: {button_classes}")
+
+        return is_enabled
 
     def click_telephone_number_button(self):
         # Esperar que el botón esté listo y hacer clic
@@ -71,30 +89,50 @@ class UrbanRoutesPage:
         return True
 
     def add_telephone_number(self, phone):
-        # Esperar campo de teléfono y limpiarlo
+        # Esperar a que el campo esté clickeable
         phone_field = self.wait.until(EC.element_to_be_clickable(self.telephone_number))
-        phone_field.clear()
+
+        # Enviar el número directamente
         phone_field.send_keys(phone)
 
-        # Botón para confirmar teléfono
-        next_button = self.wait.until(EC.element_to_be_clickable(self.telephone_button))
+        # Hacer clic en el botón "Siguiente"
+        next_button = self.wait.until(EC.element_to_be_clickable(self.next_button))
         next_button.click()
 
-        # Esperar campo de SMS antes de obtener código
-        sms_field = self.wait.until(EC.element_to_be_clickable(locators.SMS_CODE_FIELD))
+        # Obtener el código de confirmación (¡IMPORTANTE: pasar self.driver!)
+        code = retrieve_phone_code(self.driver)
 
-        # Obtener código desde los logs de red
-        code = retrieve_phone_code(driver=self.driver)
-        sms_field.send_keys(code)
+        # Ingresar el código SMS
+        code_field = self.wait.until(EC.element_to_be_clickable(self.sms_code_field))
+        code_field.send_keys(code)
 
-        # Confirmar SMS
-        confirm_button = self.wait.until(EC.element_to_be_clickable(locators.SMS_CONFIRM_BUTTON))
+        # Confirmar el código
+        confirm_button = self.wait.until(EC.element_to_be_clickable(self.sms_confirm_button))
         confirm_button.click()
 
+    def open_payment_method_modal(self):
+        """Abrir el modal de método de pago"""
+        add_payment_btn = self.wait.until(EC.element_to_be_clickable(self.add_card_button))
+        add_payment_btn.click()
+
     def add_credit_card(self, card_number, code):
-        self.driver.find_element(*self.add_card_button).click()
-        self.driver.find_element(By.ID, 'number').send_keys(card_number)
-        self.driver.find_element(By.ID, 'code').send_keys(code)
+        """Agregar tarjeta de crédito"""
+        # Esperar campo número
+        number_field = self.wait.until(EC.visibility_of_element_located(self.card_input))
+        number_field.clear()
+        number_field.send_keys(card_number)
+
+        # Esperar campo CVV
+        cvv_field = self.wait.until(EC.visibility_of_element_located(self.cvv_input))
+        cvv_field.clear()
+        cvv_field.send_keys(code)
+
+        # Botón confirmar
+        try:
+            confirm_btn = self.wait.until(EC.element_to_be_clickable(self.next_button))
+            confirm_btn.click()
+        except:
+            pass
 
     def enter_message(self, message):
         self.driver.find_element(*self.message_input).send_keys(message)
