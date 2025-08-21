@@ -115,6 +115,11 @@ class UrbanRoutesPage:
         add_payment_btn = self.wait.until(EC.element_to_be_clickable(self.add_card_button))
         add_payment_btn.click()
 
+    def open_payment_method_modal(self):
+        """Abrir el modal de método de pago"""
+        add_payment_btn = self.wait.until(EC.element_to_be_clickable(self.add_card_button))
+        add_payment_btn.click()
+
     def add_credit_card(self, card_number, code):
         """Agregar tarjeta de crédito"""
         # Esperar campo número
@@ -133,7 +138,6 @@ class UrbanRoutesPage:
             confirm_btn.click()
         except:
             pass
-
     def enter_message(self, message):
         self.driver.find_element(*self.message_input).send_keys(message)
 
