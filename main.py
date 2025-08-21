@@ -50,8 +50,9 @@ class TestUrbanRoutes:
         """Prueba 3: Rellenar el número de teléfono"""
         self.page.click_telephone_number_button()
         self.page.add_telephone_number(data.phone_number)
-        phone_input = self.driver.find_element(By.CLASS_NAME, "np-text")
-        assert data.phone_number in phone_input.get_attribute("textContent") or data.phone_number in phone_input.text
+        phone_input = self.driver.find_element(By.ID, "phone")
+        assert data.phone_number in phone_input.get_attribute("value")
+
 
     def test_add_credit_card(self):
         """Prueba 4: Agregar una tarjeta de crédito"""
