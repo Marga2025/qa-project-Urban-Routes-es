@@ -38,6 +38,8 @@ class UrbanRoutesPage:
         self.card_add_button = locators.CARD_ADD_BUTTON
         self.payment_close_button = locators.PAYMENT_CLOSE_BUTTON
         self.payment_picker = locators.PAYMENT_PICKER
+        self.request_taxi_button = locators.REQUEST_TAXI_BUTTON
+        self.driver_info = locators.DRIVER_INFO
 
     def load(self, url):
         self.driver.get(url)
@@ -222,7 +224,30 @@ class UrbanRoutesPage:
         for _ in range(quantity):
             self.driver.find_element(*self.ice_cream_plus_button).click()
 
+    def click_request_taxi(self):
+        """Hace clic en el botón 'Pedir un taxi' aunque no esté visible"""
+        try:
+            button = self.driver.find_element(*self.request_taxi_button)
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", button)
+            self.driver.execute_script("arguments[0].click();", button)
+            print("✅ Se hizo clic en 'Pedir un taxi' (forzado con JS)")
+            return True
+        except Exception as e:
+            print(f"❌ No se pudo hacer clic en 'Pedir un taxi': {type(e).__name__}: {str(e)}")
+            return False
+
     def wait_for_driver_info(self):
-        self.wait.until(
-            EC.visibility_of_element_located(self.driver_modal)
-        )
+        """Espera hasta que desaparezca 'Buscando conductor' y aparezca la info del conductor"""
+        try:
+            # Espera a que se vaya el estado de búsqueda
+            self.wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, "order-spinner")))
+
+            # Ahora espera la info del conductor
+            driver_info = WebDriverWait(self.driver, 60).until(
+                EC.visibility_of_element_located(self.driver_info)
+            )
+            print("✅ Apareció la información del conductor")
+            return driver_info
+        except Exception as e:
+            print(f"❌ No se encontró la información del conductor: {type(e).__name__}: {str(e)}")
+            return None
