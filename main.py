@@ -84,15 +84,9 @@ class TestUrbanRoutes:
 
     def test_search_taxi(self):
         """Prueba 8: Hacer clic en el botón para buscar un taxi"""
-        self.page.click_request_taxi()
-        # Esperar a que aparezca el modal de búsqueda de conductor
-        wait = WebDriverWait(self.driver, 40)
-        search_modal = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "order-header-title")))
-        assert search_modal.is_displayed()
+        assert self.page.click_request_taxi()
 
     def test_wait_for_driver_info(self):
         """Prueba 9: Verificar que aparece la información del conductor"""
-        # Esperar a que aparezca la información del conductor
-        wait = WebDriverWait(self.driver, 40)
-        driver_info = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "driver-info")))
-        assert driver_info.is_displayed()
+        driver_info = self.page.wait_for_driver_info()
+        assert driver_info is not None
