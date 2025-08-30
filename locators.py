@@ -20,3 +20,4 @@ CARD_OPTION = (By.XPATH, "//div[contains(@class, 'pp-row')]//div[text()='Agregar
 CARD_ADD_BUTTON = (By.XPATH, "//button[contains(., 'Agregar')]")
 PAYMENT_CLOSE_BUTTON = (By.CSS_SELECTOR, "div.payment-picker.open button.close-button.section-close")
 PAYMENT_PICKER = (By.CSS_SELECTOR, "div.payment-picker.open")
+DRIVER_INFO = (By.CLASS_NAME, "order-body")
