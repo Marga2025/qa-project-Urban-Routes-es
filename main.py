@@ -8,7 +8,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-
 import data
 from urban_routes_page import UrbanRoutesPage
 
@@ -53,11 +52,15 @@ class TestUrbanRoutes:
         phone_input = self.driver.find_element(By.ID, "phone")
         assert data.phone_number in phone_input.get_attribute("value")
 
-
     def test_add_credit_card(self):
         """Prueba 4: Agregar una tarjeta de crédito"""
+        self.page.open_payment_method_modal()
+        self.page.select_card_payment()
         self.page.add_credit_card(data.card_number, data.card_code)
-        cvv_field = self.driver.find_element(By.ID, "code")
+        self.page.close_payment_method_modal()
+
+        # Verifica que el CVV se haya escrito correctamente
+        cvv_field = self.driver.find_element(By.CSS_SELECTOR, ".card-code-input input#code")
         assert cvv_field.get_attribute("value") == data.card_code
 
     def test_write_message_for_driver(self):
