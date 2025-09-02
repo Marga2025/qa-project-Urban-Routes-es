@@ -47,10 +47,16 @@ class TestUrbanRoutes:
 
     def test_fill_phone_number(self):
         """Prueba 3: Rellenar el número de teléfono"""
-        self.page.click_telephone_number_button()
-        self.page.add_telephone_number(data.phone_number)
-        phone_input = self.driver.find_element(By.ID, "phone")
-        assert data.phone_number in phone_input.get_attribute("value")
+
+        self.page.click_telephone_number_button()  # Hace clic en el botón para ingresar el número
+        self.page.add_telephone_number(data.phone_number)  # Ingresa el número
+
+        # Encuentra el div donde se muestra el número ingresado
+        phone_input = self.driver.find_element(By.XPATH, "//*[@id='root']/div/div[3]/div[3]/div[2]/div[2]/div[1]")
+        number_phone = phone_input.text
+
+        # Verifica que el número ingresado esté en el texto visible del DOM
+        assert data.phone_number in number_phone
 
     def test_add_credit_card(self):
         """Prueba 4: Agregar una tarjeta de crédito"""
@@ -59,8 +65,8 @@ class TestUrbanRoutes:
         self.page.add_credit_card(data.card_number, data.card_code)
         self.page.close_payment_method_modal()
 
-        # Verifica que el CVV se haya escrito correctamente
-        cvv_field = self.driver.find_element(By.CSS_SELECTOR, ".card-code-input input#code")
+        # Verificación: que el CVV quedó escrito
+        cvv_field = self.driver.find_element(By.CSS_SELECTOR, "input#code.card-input")
         assert cvv_field.get_attribute("value") == data.card_code
 
     def test_write_message_for_driver(self):
@@ -89,4 +95,7 @@ class TestUrbanRoutes:
     def test_wait_for_driver_info(self):
         """Prueba 9: Verificar que aparece la información del conductor"""
         driver_info = self.page.wait_for_driver_info()
-        assert driver_info is not None
+
+        # Verifica que se haya cargado algún texto con la info
+        assert driver_info is not None and driver_info.strip() != "", "No apareció la información del conductor"
+        print(f"✅ Información del conductor encontrada: {driver_info}")
