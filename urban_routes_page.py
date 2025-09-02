@@ -92,13 +92,15 @@ class UrbanRoutesPage:
         return is_enabled
 
     def click_telephone_number_button(self):
-        # Esperar que el botón esté listo y hacer clic
-        telephone_number_button = self.wait.until(EC.element_to_be_clickable(self.telephone_button))
-        telephone_number_button.click()
-
-        # Esperar que aparezca el campo de número de teléfono para confirmar que se abrió
-        self.wait.until(EC.visibility_of_element_located(self.telephone_number))
-        return True
+        """Hace clic en el botón para ingresar el número de teléfono"""
+        try:
+            button = self.wait.until(
+                EC.element_to_be_clickable(self.telephone_button)
+            )
+            button.click()
+            print("✅ Se hizo clic en el botón para ingresar número de teléfono")
+        except Exception as e:
+            print(f"❌ Error al hacer clic en el botón de teléfono: {e}")
 
     def add_telephone_number(self, phone):
         # Esperar a que el campo esté clickeable
@@ -123,87 +125,72 @@ class UrbanRoutesPage:
         confirm_button.click()
 
     def open_payment_method_modal(self):
-        """Abrir el modal de método de pago"""
-        add_payment_btn = self.wait.until(EC.element_to_be_clickable(self.add_card_button))
-        add_payment_btn.click()
-        print("✅ Modal de método de pago abierto")
+        modal_btn = self.wait.until(EC.element_to_be_clickable(self.add_card_button))
+        modal_btn.click()
+        print("✅ Modal de métodos de pago abierto")
 
+    # --- Cerrar modal ---
+    def close_payment_method_modal(self):
+        close_btn = self.wait.until(EC.element_to_be_clickable(self.payment_close_button))
+        close_btn.click()
+        print("✅ Modal de métodos de pago cerrado")
+
+    # --- Seleccionar opción de agregar tarjeta ---
     def select_card_payment(self):
-        """Selecciona 'Agregar tarjeta' como método de pago"""
-        card_option = self.wait.until(EC.element_to_be_clickable(self.card_option))
+        option = self.wait.until(EC.element_to_be_clickable(self.card_option))
+        option.click()
+        print("✅ Opción 'Agregar tarjeta' seleccionada")
 
-        # Esperar que deje de estar 'disabled'
-        self.wait.until(lambda d: "disabled" not in card_option.get_attribute("class"))
+    # --- Llenar número de tarjeta ---
+    def set_card_number_field(self, card_number):
+        card_input = self.wait.until(EC.presence_of_element_located(self.card_input))
+        self.driver.execute_script("arguments[0].value = arguments[1];", card_input, card_number)
+        print(f"👉 Número de tarjeta ingresado: {card_number}")
 
-        self.driver.execute_script("arguments[0].scrollIntoView(true);", card_option)
-        card_option.click()
-        print("✅ Se seleccionó 'Agregar tarjeta'")
+    # --- Llenar CVV y simular TAB ---
+    def set_card_code_field(self, card_code):
+        cvv_input = self.wait.until(EC.presence_of_element_located(self.cvv_input))
+        self.driver.execute_script("arguments[0].value = arguments[1];", cvv_input, card_code)
 
-    def add_credit_card(self, card_number, cvv_code):
-        """Agrega una tarjeta de crédito"""
+        # Simular pérdida de foco (TAB)
+        ActionChains(self.driver).send_keys(Keys.TAB).perform()
+        time.sleep(0.5)
+
+        cvv_value = self.driver.execute_script("return arguments[0].value;", cvv_input)
+        print(f"👉 CVV ingresado: {cvv_value}")
+
+    # --- Clic en botón Agregar ---
+    def click_add_button(self):
+        add_btn = self.wait.until(EC.element_to_be_clickable(self.card_add_button))
+        self.driver.execute_script("arguments[0].click();", add_btn)
+        print("✅ Botón 'Agregar' presionado")
+
+    # --- Flujo completo ---
+    def add_credit_card(self, card_number, card_code):
+        """Ingresa número de tarjeta y CVV"""
         try:
-            # Número de tarjeta
-            card_field = self.wait.until(EC.visibility_of_element_located(self.card_input))
+            # Campo número tarjeta
+            card_field = self.wait.until(EC.presence_of_element_located(self.card_input))
             card_field.clear()
             card_field.send_keys(card_number)
+            print(f"👉 Número de tarjeta ingresado: {card_number}")
 
-            # CVV
-            cvv_field = self.wait.until(EC.visibility_of_element_located(self.cvv_input))
+            # Campo CVV
+            cvv_field = self.wait.until(EC.presence_of_element_located(self.cvv_input))
             cvv_field.clear()
-            cvv_field.send_keys(cvv_code)
+            cvv_field.send_keys(card_code)
+            print(f"👉 CVV ingresado: {card_code}")
 
-            # Forzar pérdida de foco para habilitar botón
+            # 🔑 Forzar pérdida de foco: presionamos TAB
             cvv_field.send_keys(Keys.TAB)
-            body = self.driver.find_element(By.TAG_NAME, "body")
-            body.click()
 
-            # Esperar botón activo
+            # Ahora sí: esperar botón "Agregar"
             add_btn = self.wait.until(EC.element_to_be_clickable(self.card_add_button))
-            print("Botón habilitado:", add_btn.is_enabled())
             add_btn.click()
-            print("✅ Se hizo clic en 'Agregar tarjeta'")
+            print("✅ Botón 'Agregar' presionado")
 
-            # Código SMS
-            sms_field = self.wait.until(EC.visibility_of_element_located(self.sms_code_field))
-            sms_code = retrieve_phone_code()
-            sms_field.send_keys(sms_code)
-
-            confirm_btn = self.wait.until(EC.element_to_be_clickable(self.sms_confirm_button))
-            confirm_btn.click()
-            print("✅ Código SMS confirmado")
-
-            # Esperar cierre modal SMS
-            self.wait.until(EC.invisibility_of_element_located(self.sms_code_field))
-            print("✅ Modal de tarjeta cerrado")
         except Exception as e:
             print(f"❌ Error al agregar tarjeta: {e}")
-
-    def close_payment_method_modal(self):
-        """Cierra el modal de método de pago"""
-        try:
-            # Esperar a que aparezca la tarjeta seleccionada (ya agregada)
-            self.wait.until(EC.visibility_of_element_located(
-                (By.XPATH, "//div[contains(@class,'pp-value') and contains(., 'Tarjeta')]")
-            ))
-
-            # Ahora buscar el botón de cerrar dentro del modal abierto
-            close_btn = self.wait.until(
-                EC.element_to_be_clickable(
-                    (By.CSS_SELECTOR, "div.payment-picker.open button.close-button.section-close"))
-            )
-
-            # Ejecutar el clic con JS para evitar problemas de superposición
-            self.driver.execute_script("arguments[0].click();", close_btn)
-
-            # Esperar que el modal desaparezca
-            self.wait.until(EC.invisibility_of_element_located(
-                (By.CSS_SELECTOR, "div.payment-picker.open")
-            ))
-            print("✅ Modal de método de pago cerrado")
-
-        except Exception as e:
-            print(f"❌ No se pudo cerrar el modal de método de pago: {e}")
-
     def enter_message(self, message):
         self.driver.find_element(*self.message_input).send_keys(message)
 
@@ -225,29 +212,48 @@ class UrbanRoutesPage:
             self.driver.find_element(*self.ice_cream_plus_button).click()
 
     def click_request_taxi(self):
-        """Hace clic en el botón 'Pedir un taxi' aunque no esté visible"""
+        """Hace clic en el botón 'Pedir un taxi' y verifica que aparezca el modal"""
         try:
-            button = self.driver.find_element(*self.request_taxi_button)
-            self.driver.execute_script("arguments[0].scrollIntoView(true);", button)
-            self.driver.execute_script("arguments[0].click();", button)
-            print("✅ Se hizo clic en 'Pedir un taxi' (forzado con JS)")
-            return True
-        except Exception as e:
-            print(f"❌ No se pudo hacer clic en 'Pedir un taxi': {type(e).__name__}: {str(e)}")
-            return False
-
-    def wait_for_driver_info(self):
-        """Espera hasta que desaparezca 'Buscando conductor' y aparezca la info del conductor"""
-        try:
-            # Espera a que se vaya el estado de búsqueda
-            self.wait.until(EC.invisibility_of_element_located((By.CLASS_NAME, "order-spinner")))
-
-            # Ahora espera la info del conductor
-            driver_info = WebDriverWait(self.driver, 60).until(
-                EC.visibility_of_element_located(self.driver_info)
+            button = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable(self.request_taxi_button)
             )
-            print("✅ Apareció la información del conductor")
-            return driver_info
+            button.click()
+            print("✅ Se hizo clic en 'Pedir un taxi'")
+            time.sleep(2)  # Agregar esta línea para dar tiempo al modal
+            return True
+        except:
+            button = self.driver.find_element(*self.request_taxi_button)
+            self.driver.execute_script("arguments[0].click();", button)
+            print("✅ Se hizo clic en 'Pedir un taxi' (con JS)")
+            time.sleep(2)  # Agregar esta línea también
+            return True
+
+    def wait_for_driver_info(self, timeout=45):
+        """Espera a que aparezca la info del conductor en .drive-preview y devuelve su texto."""
+        try:
+            # 1) Esperar a que exista el contenedor .drive-preview en el DOM
+            container = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located(self.driver_info)  # self.driver_info = (By.CLASS_NAME, "drive-preview")
+            )
+
+            # 2) Traerlo al viewport y esperar visibilidad
+            self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", container)
+            WebDriverWait(self.driver, 10).until(EC.visibility_of(container))
+
+            # 3) Esperar a que tenga contenido (texto no vacío)
+            end = time.time() + 30  # tiempo adicional para que cargue el texto interno
+            text = container.text.strip()
+            while text == "" and time.time() < end:
+                time.sleep(0.5)
+                text = container.text.strip()
+
+            if text:
+                print(f"✅ Información del conductor encontrada: {text}")
+                return text
+
+            print("❌ El contenedor '.drive-preview' apareció pero sin texto.")
+            return None
+
         except Exception as e:
-            print(f"❌ No se encontró la información del conductor: {type(e).__name__}: {str(e)}")
+            print(f"❌ No apareció la información del conductor: {type(e).__name__}: {e}")
             return None
